@@ -256,6 +256,27 @@ module Ftdi
       new_flowctrl
     end
 
+    # Gets write buffer chunk size.
+    # @return [Fixnum] Write buffer chunk size.
+    # @raise [StatusCodeError] libftdi reports error.
+    # @see #write_data_chunksize=
+    def write_data_chunksize
+      p = FFI::MemoryPointer.new(:uint, 1)
+      check_result(Ftdi.ftdi_write_data_get_chunksize(ctx, p))
+      p.read_uint
+    end
+
+    # Configure write buffer chunk size.
+    # Automatically reallocates the buffer.
+    # @note Default is 4096.
+    # @param [Fixnum] new_chunksize Write buffer chunk size.
+    # @return [Fixnum] New write buffer chunk size.
+    # @raise [StatusCodeError] libftdi reports error.
+    def write_data_chunksize=(new_chunksize)
+      check_result(Ftdi.ftdi_write_data_set_chunksize(ctx, new_chunksize))
+      new_chunksize
+    end
+
     # Writes data.
     # @param [String, Array] bytes String or array of integers that will be interpreted as bytes using pack('c*').
     # @return [Fixnum] Number of written bytes.
@@ -346,6 +367,8 @@ module Ftdi
   attach_function :ftdi_set_line_property2, [ :pointer, BitsType, StopbitsType, ParityType, BreakType ], :int
   attach_function :ftdi_setflowctrl, [ :pointer, :int ], :int
   attach_function :ftdi_write_data, [ :pointer, :pointer, :int ], :int
+  attach_function :ftdi_write_data_set_chunksize, [ :pointer, :uint ], :int
+  attach_function :ftdi_write_data_get_chunksize, [ :pointer, :pointer ], :int
   attach_function :ftdi_read_data, [ :pointer, :pointer, :int ], :int
   attach_function :ftdi_read_data_set_chunksize, [ :pointer, :uint ], :int
   attach_function :ftdi_read_data_get_chunksize, [ :pointer, :pointer ], :int
