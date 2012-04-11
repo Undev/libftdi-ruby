@@ -30,14 +30,12 @@ begin
     ctx.set_line_property(:bits_8, :stop_bit_2, :none)
     ctx.flowctrl = Ftdi::SIO_DISABLE_FLOW_CTRL
 
-    arr = [ 0 ]
-    512.times { arr << 1 }
+    arr = Array.new(513) { |i| i.zero? ? 0 : 1 }
     dmx_write(ctx, arr)
 
     sleep 1
 
-    arr = [ 0 ]
-    512.times { arr << 0 }
+    arr = [ 0 ] * 513
     dmx_write(ctx, arr)
 
     puts "Context is:"
