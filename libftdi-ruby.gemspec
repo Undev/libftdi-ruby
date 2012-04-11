@@ -7,9 +7,9 @@ Gem::Specification.new do |s|
   s.version     = Ftdi::VERSION.dup
   s.authors     = ["Akzhan Abdulin"]
   s.email       = ["akzhan.abdulin@gmail.com"]
-  s.homepage    = "http://github.com/akzhan/libftdi-ruby"
-  s.summary     = %q{libftdi library binding}
-  s.description = %q{libftdi library binding to talk to FTDI chips}
+  s.homepage    = "http://github.com/Undev/libftdi-ruby"
+  s.summary     = %q{libftdi library bindings}
+  s.description = %q{libftdi library bindings to talk to FTDI chips}
 
   s.rubyforge_project = "libftdi-ruby"
 
