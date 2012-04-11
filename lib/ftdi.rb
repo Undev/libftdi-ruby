@@ -33,13 +33,13 @@ module Ftdi
 
   SIO_DISABLE_FLOW_CTRL = 0x0
 
-  # Base error
+  # Base error of libftdi.
   class Error < RuntimeError; end
 
-  # Initialization error
+  # Initialization error of libftdi.
   class CannotInitializeContextError < Error; end
 
-  # Error with libftdi status code
+  # Error of libftdi with its status code.
   class StatusCodeError < Error
     attr_accessor :status_code
 
@@ -53,7 +53,7 @@ module Ftdi
     end
   end
 
-  # Context
+  # libftdi context
   class Context < FFI::Struct
     layout(
       # USB specific
@@ -115,10 +115,6 @@ module Ftdi
       super(ptr)
     end
 
-    def ctx
-      self.to_ptr
-    end
-
     # Deinitialize and free an ftdi context.
     def dispose
       Ftdi.ftdi_free(ctx)
@@ -129,13 +125,6 @@ module Ftdi
 
     def error_string
       self[:error_str]
-    end
-
-    def check_result(status_code)
-      if status_code < 0
-        raise StatusCodeError.new(status_code, error_string)
-      end
-      nil
     end
 
     # Opens the first device with a given vendor and product ids.
@@ -179,10 +168,25 @@ module Ftdi
     end
 
     def write_data(bytes)
+      bytes = bytes.pack('c*')  if bytes.respond_to?(:pack)
       size = bytes.respond_to?(:bytesize) ? bytes.bytesize : bytes.size
       mem_buf = FFI::MemoryPointer.new(:char, size)
       mem_buf.put_bytes(0, bytes)
-      check_result(Ftdi.ftdi_write_data(ctx, mem_buf, size))
+      r = Ftdi.ftdi_write_data(ctx, mem_buf, size)
+      check_result(r)
+      r
+    end
+
+  private
+    def ctx
+      self.to_ptr
+    end
+
+    def check_result(status_code)
+      if status_code < 0
+        raise StatusCodeError.new(status_code, error_string)
+      end
+      nil
     end
   end
 

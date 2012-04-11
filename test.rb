@@ -32,13 +32,13 @@ begin
 
     arr = [ 0 ]
     512.times { arr << 1 }
-    dmx_write(ctx, arr.pack('c*'))
+    dmx_write(ctx, arr)
 
     sleep 1
 
     arr = [ 0 ]
     512.times { arr << 0 }
-    dmx_write(ctx, arr.pack('c*'))
+    dmx_write(ctx, arr)
 
     puts "Context is:"
     ctx.members.each { |k| puts "#{k} = #{ctx[k]}" }
