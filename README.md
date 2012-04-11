@@ -31,7 +31,7 @@ begin
     sleep 0.001
     ctx.set_line_property2(:bits_8, :stop_bit_2, :none, :break_off)
     sleep 0.001
-    ctx.write_data(ctx, arr)
+    ctx.write_data(arr)
 
     puts "Context is:"
     ctx.members.each { |k| puts "#{k} = #{ctx[k]}" }
