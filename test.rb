@@ -5,23 +5,24 @@ $LOAD_PATH.unshift(File.expand_path('lib', File.dirname(__FILE__)))
 
 require 'ftdi'
 
-context = Ftdi::Context.new
+BAUD_RATE = 250000
 
+ctx = Ftdi::Context.new
 
 begin
-  context.usb_open(0x0403, 0x6001)
+  ctx.usb_open(0x0403, 0x6001)
   begin
+    ctx.baudrate = BAUD_RATE
 
     puts "Context is:"
-    context.members.each { |k| puts "#{k} = #{context[k]}" }
-
+    ctx.members.each { |k| puts "#{k} = #{ctx[k]}" }
 
   ensure
-    context.usb_close
+    ctx.usb_close
   end
 rescue Ftdi::Error => e
   $stderr.puts e.to_s
 end
 
-context.close
+ctx.dispose
 

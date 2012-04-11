@@ -94,6 +94,18 @@ module Ftdi
       super(ptr)
     end
 
+    def ctx
+      self.to_ptr
+    end
+
+    # Deinitialize and free an ftdi context.
+    def dispose
+      Ftdi.ftdi_free(ctx)
+      nil
+    end
+
+    alias :close :dispose
+
     def error_string
       self[:error_str]
     end
@@ -107,28 +119,32 @@ module Ftdi
 
     # Opens the first device with a given vendor and product ids.
     def usb_open(vendor, product)
-      check_result(Ftdi.ftdi_usb_open(self.to_ptr, vendor, product))
+      raise ArgumentError.new('vendor should be Fixnum')  unless vendor.kind_of?(Fixnum)
+      raise ArgumentError.new('product should be Fixnum')  unless product.kind_of?(Fixnum)
+      check_result(Ftdi.ftdi_usb_open(ctx, vendor, product))
     end
 
     # Closes the ftdi device.
     def usb_close
-      Ftdi.ftdi_usb_close(self.to_ptr)
+      Ftdi.ftdi_usb_close(ctx)
       nil
     end
 
-    # Deinitialize and free an ftdi context.
-    def dispose
-      Ftdi.ftdi_free(self.to_ptr)
-      nil
+    def baudrate
+      self[:baudrate]
     end
 
-    alias :close :dispose
+    def baudrate=(new_baudrate)
+      raise ArgumentError.new('baudrate should be Fixnum')  unless new_baudrate.kind_of?(Fixnum)
+      Ftdi.ftdi_set_baudrate(ctx, new_baudrate)
+    end
   end
 
   attach_function :ftdi_new, [ ], :pointer
   attach_function :ftdi_free, [ :pointer ], :void
   attach_function :ftdi_usb_open, [ :pointer, :int, :int ], :int
   attach_function :ftdi_usb_close, [ :pointer ], :void
+  attach_function :ftdi_set_baudrate, [ :pointer, :int ], :int
 
 end
 
