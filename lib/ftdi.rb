@@ -269,6 +269,43 @@ module Ftdi
       r
     end
 
+    # Gets read buffer chunk size.
+    # @return [Fixnum] Read buffer chunk size.
+    # @raise [StatusCodeError] libftdi reports error.
+    # @see #read_data_chunksize=
+    def read_data_chunksize
+      p = FFI::MemoryPointer.new(:uint, 1)
+      check_result(Ftdi.ftdi_read_data_get_chunksize(ctx, p))
+      p.read_uint
+    end
+
+    # Configure read buffer chunk size.
+    # Automatically reallocates the buffer.
+    # @note Default is 4096.
+    # @param [Fixnum] new_chunksize Read buffer chunk size.
+    # @return [Fixnum] New read buffer chunk size.
+    # @raise [StatusCodeError] libftdi reports error.
+    def read_data_chunksize=(new_chunksize)
+      check_result(Ftdi.ftdi_read_data_set_chunksize(ctx, new_chunksize))
+      new_chunksize
+    end
+
+    # Reads data in chunks from the chip.
+    # Returns when at least one byte is available or when the latency timer has elapsed.
+    # Automatically strips the two modem status bytes transfered during every read.
+    # @return [String] Bytes read; Empty string if no bytes read.
+    # @see #read_data_chunksize
+    # @raise [StatusCodeError] libftdi reports error.
+    def read_data
+      chunksize = read_data_chunksize
+      p = FFI::MemoryPointer.new(:char, chunksize)
+      bytes_read = Ftdi.ftdi_read_data(ctx, p, chunksize)
+      check_result(bytes_read)
+      r = p.read_bytes(bytes_read)
+      r.force_encoding("ASCII-8BIT")  if r.respond_to?(:force_encoding)
+      r
+    end
+
     # Gets used interface of the device.
     # @return [Interface] Used interface of the device.
     def interface
@@ -309,6 +346,9 @@ module Ftdi
   attach_function :ftdi_set_line_property2, [ :pointer, BitsType, StopbitsType, ParityType, BreakType ], :int
   attach_function :ftdi_setflowctrl, [ :pointer, :int ], :int
   attach_function :ftdi_write_data, [ :pointer, :pointer, :int ], :int
+  attach_function :ftdi_read_data, [ :pointer, :pointer, :int ], :int
+  attach_function :ftdi_read_data_set_chunksize, [ :pointer, :uint ], :int
+  attach_function :ftdi_read_data_get_chunksize, [ :pointer, :pointer ], :int
   attach_function :ftdi_set_interface, [ :pointer, Interface ], :int
 end
 
