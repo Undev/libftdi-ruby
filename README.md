@@ -18,11 +18,20 @@ begin
     ctx.flowctrl = Ftdi::SIO_DISABLE_FLOW_CTRL
 
     arr = Array.new(513) { |i| i.zero? ? 0 : 1 }
+    ctx.set_line_property2(:bits_8, :stop_bit_2, :none, :break_on)
+    sleep 0.001
+    ctx.set_line_property2(:bits_8, :stop_bit_2, :none, :break_off)
+    sleep 0.001
+    ctx.write_data(arr)
 
     sleep 1
 
     arr = [ 0 ] * 513
-    dmx_write(ctx, arr)
+    ctx.set_line_property2(:bits_8, :stop_bit_2, :none, :break_on)
+    sleep 0.001
+    ctx.set_line_property2(:bits_8, :stop_bit_2, :none, :break_off)
+    sleep 0.001
+    ctx.write_data(ctx, arr)
 
     puts "Context is:"
     ctx.members.each { |k| puts "#{k} = #{ctx[k]}" }
