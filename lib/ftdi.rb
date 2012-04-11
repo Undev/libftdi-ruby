@@ -1,6 +1,8 @@
 require 'ffi'
 require "ftdi/version"
 
+# Represents libftdi ruby bindings.
+# End-user API represented by {Ftdi::Context} class.
 module Ftdi
   extend FFI::Library
 
@@ -31,6 +33,10 @@ module Ftdi
   # Break type for {Ftdi::Context#set_line_property2}.
   BreakType = enum(:break_off, :break_on)
 
+  # Port interface for chips with multiple interfaces.
+  # @see Ftdi::Context#interface=
+  Interface = enum(:interface_any, :interface_a, :interface_b, :interface_c, :interface_d)
+
   # Flow control: disable
   # @see Ftdi::Context#flowctrl=
   SIO_DISABLE_FLOW_CTRL = 0x0
@@ -44,10 +50,10 @@ module Ftdi
   # Base error of libftdi.
   class Error < RuntimeError; end
 
-  # Initialization error of libftdi.
+  # Represents initialization error of libftdi.
   class CannotInitializeContextError < Error; end
 
-  # Error of libftdi with its status code.
+  # Represents error of libftdi with its status code.
   class StatusCodeError < Error
     # Gets status code.
     # @return [Fixnum] Status code.
@@ -65,7 +71,7 @@ module Ftdi
     end
   end
 
-  # libftdi context
+  # Represents libftdi context and end-user API.
   class Context < FFI::Struct
     layout(
       # USB specific
@@ -155,6 +161,37 @@ module Ftdi
       check_result(Ftdi.ftdi_usb_open(ctx, vendor, product))
     end
 
+    # Opens the first device with a given vendor and product ids, description and serial.
+    # @param [Fixnum] vendor Vendor id.
+    # @param [Fixnum] product Product id.
+    # @param [String] description Description to search for. Use nil if not needed.
+    # @param [String] serial Serial to search for. Use nil if not needed.
+    # @return [NilClass] nil
+    # @raise [StatusCodeError] libftdi reports error.
+    # @raise [ArgumentError] Bad arguments.
+    def usb_open_desc(vendor, product, description, serial)
+      raise ArgumentError.new('vendor should be Fixnum')  unless vendor.kind_of?(Fixnum)
+      raise ArgumentError.new('product should be Fixnum')  unless product.kind_of?(Fixnum)
+      check_result(Ftdi.ftdi_usb_open_desc(ctx, vendor, product, description, serial))
+    end
+
+    # Opens the index-th device with a given vendor and product ids, description and serial.
+    # @param [Fixnum] vendor Vendor id.
+    # @param [Fixnum] product Product id.
+    # @param [String] description Description to search for. Use nil if not needed.
+    # @param [String] serial Serial to search for. Use nil if not needed.
+    # @param [Fixnum] index Number of matching device to open if there are more than one, starts with 0.
+    # @return [NilClass] nil
+    # @raise [StatusCodeError] libftdi reports error.
+    # @raise [ArgumentError] Bad arguments.
+    def usb_open_desc_index(vendor, product, description, serial, index)
+      raise ArgumentError.new('vendor should be Fixnum')  unless vendor.kind_of?(Fixnum)
+      raise ArgumentError.new('product should be Fixnum')  unless product.kind_of?(Fixnum)
+      raise ArgumentError.new('index should be Fixnum')  unless index.kind_of?(Fixnum)
+      raise ArgumentError.new('index should be greater than or equal to zero')  if index < 0
+      check_result(Ftdi.ftdi_usb_open_desc_index(ctx, vendor, product, description, serial, index))
+    end
+
     # Closes the ftdi device.
     # @return [NilClass] nil
     def usb_close
@@ -202,7 +239,7 @@ module Ftdi
     # Set flow control setting for ftdi chip.
     # @param [Fixnum] new_flowctrl New flow control setting.
     # @raise [StatusCodeError] libftdi reports error.
-    # @return [Fixnum] New flow control setting
+    # @return [Fixnum] New flow control setting.
     # @see SIO_DISABLE_FLOW_CTRL
     # @see SIO_RTS_CTS_HS
     # @see SIO_DTR_DSR_HS
@@ -225,6 +262,15 @@ module Ftdi
       r
     end
 
+    # Open selected channels on a chip, otherwise use first channel.
+    # @param [Interface] new_interface Interface to use for FT2232C/2232H/4232H chips.
+    # @raise [StatusCodeError] libftdi reports error.
+    # @return [Interface] New interface.
+    def interface=(new_interface)
+      check_result(Ftdi.ftdi_set_interface(ctx, new_interface))
+      new_interface
+    end
+
   private
     def ctx
       self.to_ptr
@@ -241,11 +287,14 @@ module Ftdi
   attach_function :ftdi_new, [ ], :pointer
   attach_function :ftdi_free, [ :pointer ], :void
   attach_function :ftdi_usb_open, [ :pointer, :int, :int ], :int
+  attach_function :ftdi_usb_open_desc, [ :pointer, :int, :int, :string, :string ], :int
+  attach_function :ftdi_usb_open_desc_index, [ :pointer, :int, :int, :string, :string, :uint ], :int
   attach_function :ftdi_usb_close, [ :pointer ], :void
   attach_function :ftdi_set_baudrate, [ :pointer, :int ], :int
   attach_function :ftdi_set_line_property, [ :pointer, BitsType, StopbitsType, ParityType ], :int
   attach_function :ftdi_set_line_property2, [ :pointer, BitsType, StopbitsType, ParityType, BreakType ], :int
   attach_function :ftdi_setflowctrl, [ :pointer, :int ], :int
   attach_function :ftdi_write_data, [ :pointer, :pointer, :int ], :int
+  attach_function :ftdi_set_interface, [ :pointer, Interface ], :int
 end
 
