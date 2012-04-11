@@ -20,5 +20,6 @@ Gem::Specification.new do |s|
 
   s.add_runtime_dependency "ffi", "~> 1.0"
   s.add_development_dependency "yard", "~> 0.7.5"
+  s.add_development_dependency "redcarpet", "~> 1.17.2"
 end
 
