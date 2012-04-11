@@ -269,6 +269,12 @@ module Ftdi
       r
     end
 
+    # Gets used interface of the device.
+    # @return [Interface] Used interface of the device.
+    def interface
+      Interface[self[:interface]]
+    end
+
     # Open selected channels on a chip, otherwise use first channel.
     # @param [Interface] new_interface Interface to use for FT2232C/2232H/4232H chips.
     # @raise [StatusCodeError] libftdi reports error.

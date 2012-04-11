@@ -26,6 +26,7 @@ end
 begin
   ctx.usb_open(0x0403, 0x6001)
   begin
+    puts ctx.interface
     ctx.baudrate = BAUD_RATE
     ctx.set_line_property(:bits_8, :stop_bit_2, :none)
     ctx.flowctrl = Ftdi::SIO_DISABLE_FLOW_CTRL
