@@ -12,6 +12,24 @@ module Ftdi
   # Automatic loading / unloading of kernel modules
   ModuleDetachMode = enum(:auto_detach_sio_module, :dont_detach_sio_module)
 
+  # Number of bits for {ftdi_set_line_property}
+  BitsType = enum(
+    :bits_7, 7,
+    :bits_8, 8
+  )
+
+  # Number of stop bits for {ftdi_set_line_property}
+  StopbitsType = enum(
+    :stop_bit_1, 0,
+    :stop_bit_15, 1,
+    :stop_bit_2, 2
+  )
+
+  # Parity mode for {ftdi_set_line_property}
+  ParityType = enum(:none, :odd, :even, :mark, :space)
+
+  SIO_DISABLE_FLOW_CTRL = 0x0
+
   # Base error
   class Error < RuntimeError; end
 
@@ -130,13 +148,26 @@ module Ftdi
       nil
     end
 
+    # Gets the chip baud rate.
     def baudrate
       self[:baudrate]
     end
 
+    # Sets the chip baud rate.
     def baudrate=(new_baudrate)
       raise ArgumentError.new('baudrate should be Fixnum')  unless new_baudrate.kind_of?(Fixnum)
-      Ftdi.ftdi_set_baudrate(ctx, new_baudrate)
+      check_result(Ftdi.ftdi_set_baudrate(ctx, new_baudrate))
+    end
+
+    # Set (RS232) line characteristics.
+    # The break type can only be set via ftdi_set_line_property2 and defaults to "off".
+    def set_line_property(bits, stopbits,  parity)
+      check_result(Ftdi.ftdi_set_line_property(ctx, bits, stopbits, parity))
+    end
+
+    # Set flowcontrol for ftdi chip.
+    def flowctrl=(new_flowctrl)
+      check_result(Ftdi.ftdi_setflowctrl(ctx, new_flowctrl))
     end
   end
 
@@ -145,6 +176,7 @@ module Ftdi
   attach_function :ftdi_usb_open, [ :pointer, :int, :int ], :int
   attach_function :ftdi_usb_close, [ :pointer ], :void
   attach_function :ftdi_set_baudrate, [ :pointer, :int ], :int
-
+  attach_function :ftdi_set_line_property, [ :pointer, BitsType, StopbitsType, ParityType ], :int
+  attach_function :ftdi_setflowctrl, [ :pointer, :int ], :int
 end
 
