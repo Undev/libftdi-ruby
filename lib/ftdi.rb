@@ -12,21 +12,24 @@ module Ftdi
   # Automatic loading / unloading of kernel modules
   ModuleDetachMode = enum(:auto_detach_sio_module, :dont_detach_sio_module)
 
-  # Number of bits for {ftdi_set_line_property}
+  # Number of bits for {Ftdi::Context.set_line_property}
   BitsType = enum(
     :bits_7, 7,
     :bits_8, 8
   )
 
-  # Number of stop bits for {ftdi_set_line_property}
+  # Number of stop bits for {Ftdi::Context.set_line_property}
   StopbitsType = enum(
     :stop_bit_1, 0,
     :stop_bit_15, 1,
     :stop_bit_2, 2
   )
 
-  # Parity mode for {ftdi_set_line_property}
+  # Parity mode for {Ftdi::Context.set_line_property}
   ParityType = enum(:none, :odd, :even, :mark, :space)
+
+  # Break type for {Ftdi::Context.set_line_property2}
+  BreakType = enum(:break_off, :break_on)
 
   SIO_DISABLE_FLOW_CTRL = 0x0
 
@@ -129,7 +132,7 @@ module Ftdi
     end
 
     def check_result(status_code)
-      if status_code.nonzero?
+      if status_code < 0
         raise StatusCodeError.new(status_code, error_string)
       end
       nil
@@ -160,14 +163,26 @@ module Ftdi
     end
 
     # Set (RS232) line characteristics.
-    # The break type can only be set via ftdi_set_line_property2 and defaults to "off".
+    # The break type can only be set via {#set_line_property2} and defaults to "off".
     def set_line_property(bits, stopbits,  parity)
       check_result(Ftdi.ftdi_set_line_property(ctx, bits, stopbits, parity))
+    end
+
+    # Set (RS232) line characteristics.
+    def set_line_property2(bits, stopbits,  parity, _break)
+      check_result(Ftdi.ftdi_set_line_property2(ctx, bits, stopbits, parity, _break))
     end
 
     # Set flowcontrol for ftdi chip.
     def flowctrl=(new_flowctrl)
       check_result(Ftdi.ftdi_setflowctrl(ctx, new_flowctrl))
+    end
+
+    def write_data(bytes)
+      size = bytes.respond_to?(:bytesize) ? bytes.bytesize : bytes.size
+      mem_buf = FFI::MemoryPointer.new(:char, size)
+      mem_buf.put_bytes(0, bytes)
+      check_result(Ftdi.ftdi_write_data(ctx, mem_buf, size))
     end
   end
 
@@ -177,6 +192,8 @@ module Ftdi
   attach_function :ftdi_usb_close, [ :pointer ], :void
   attach_function :ftdi_set_baudrate, [ :pointer, :int ], :int
   attach_function :ftdi_set_line_property, [ :pointer, BitsType, StopbitsType, ParityType ], :int
+  attach_function :ftdi_set_line_property2, [ :pointer, BitsType, StopbitsType, ParityType, BreakType ], :int
   attach_function :ftdi_setflowctrl, [ :pointer, :int ], :int
+  attach_function :ftdi_write_data, [ :pointer, :pointer, :int ], :int
 end
 
