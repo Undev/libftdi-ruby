@@ -5,14 +5,16 @@ $LOAD_PATH.unshift(File.expand_path('lib', File.dirname(__FILE__)))
 
 require 'ftdi'
 
-context = Ftdi::Context.open
+context = Ftdi::Context.new
 
-puts "Context is:"
-context.members.each { |k| puts "#{k} = #{context[k]}" }
 
 begin
   context.usb_open(0x0403, 0x6001)
   begin
+
+    puts "Context is:"
+    context.members.each { |k| puts "#{k} = #{context[k]}" }
+
 
   ensure
     context.usb_close

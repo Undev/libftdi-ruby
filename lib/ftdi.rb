@@ -88,76 +88,47 @@ module Ftdi
       :module_detach_mode, Ftdi::ModuleDetachMode
     )
 
+    def initialize
+      ptr = Ftdi.ftdi_new
+      raise CannotInitializeContextError.new  if ptr.nil?
+      super(ptr)
+    end
+
     def error_string
       self[:error_str]
     end
 
+    def check_result(status_code)
+      if status_code.nonzero?
+        raise StatusCodeError.new(status_code, error_string)
+      end
+      nil
+    end
+
     # Opens the first device with a given vendor and product ids.
     def usb_open(vendor, product)
-      Ftdi.usb_open(self, vendor, product)
+      check_result(Ftdi.ftdi_usb_open(self.to_ptr, vendor, product))
     end
 
     # Closes the ftdi device.
     def usb_close
-      Ftdi.usb_close(self)
-    end
-
-    # Allocate and initialize a new ftdi context
-    def self.open
-      Ftdi.init
+      Ftdi.ftdi_usb_close(self.to_ptr)
+      nil
     end
 
     # Deinitialize and free an ftdi context.
-    def close
-      Ftdi.deinit(self)
+    def dispose
+      Ftdi.ftdi_free(self.to_ptr)
+      nil
     end
+
+    alias :close :dispose
   end
 
   attach_function :ftdi_new, [ ], :pointer
   attach_function :ftdi_free, [ :pointer ], :void
   attach_function :ftdi_usb_open, [ :pointer, :int, :int ], :int
+  attach_function :ftdi_usb_close, [ :pointer ], :void
 
-  class << self
-    # Allocate and initialize a new ftdi_context
-    def init
-      r = ftdi_new
-      raise CannotInitializeContextError.new  if r.nil?
-
-      Context.new(r)
-    end
-
-    def check_context(context)
-      raise ArgumentError.new("context is nil")  if context.nil?
-    end
-
-    def raise_error(status_code, context)
-      raise StatusCodeError.new(status_code, context.error_string)
-    end
-
-    # Deinitialize and free an ftdi context.
-    def deinit(context)
-      check_context(context)
-
-      ftdi_free(context.to_ptr)
-    end
-
-    # Opens the first device with a given vendor and product ids.
-    def usb_open(context, vendor, product)
-      check_context(context)
-      r = ftdi_usb_open(context.to_ptr, vendor, product)
-      unless r.zero?
-        raise_error(r, context)
-      end
-    end
-
-    # Closes the ftdi device.
-    def usb_close(context)
-      check_context(context)
-      r = ftdi_usb_close(context.to_ptr)
-      unless r.zero?
-        raise_error(r, context)
-      end
-    end
-  end
 end
 
