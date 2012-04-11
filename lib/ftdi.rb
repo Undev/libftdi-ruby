@@ -192,6 +192,13 @@ module Ftdi
       check_result(Ftdi.ftdi_usb_open_desc_index(ctx, vendor, product, description, serial, index))
     end
 
+    # Resets the ftdi device.
+    # @raise [StatusCodeError] libftdi reports error.
+    # @return [NilClass] nil
+    def usb_reset
+      check_result(Ftdi.ftdi_usb_reset(ctx))
+    end
+
     # Closes the ftdi device.
     # @return [NilClass] nil
     def usb_close
@@ -289,6 +296,7 @@ module Ftdi
   attach_function :ftdi_usb_open, [ :pointer, :int, :int ], :int
   attach_function :ftdi_usb_open_desc, [ :pointer, :int, :int, :string, :string ], :int
   attach_function :ftdi_usb_open_desc_index, [ :pointer, :int, :int, :string, :string, :uint ], :int
+  attach_function :ftdi_usb_reset, [ :pointer ], :int
   attach_function :ftdi_usb_close, [ :pointer ], :void
   attach_function :ftdi_set_baudrate, [ :pointer, :int ], :int
   attach_function :ftdi_set_line_property, [ :pointer, BitsType, StopbitsType, ParityType ], :int
