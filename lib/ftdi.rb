@@ -72,7 +72,19 @@ module Ftdi
   end
 
   # Represents libftdi context and end-user API.
-  class Context < FFI::Struct
+  # @example Open USB device
+  #   ctx = Ftdi::Context.new
+  #   begin
+  #     ctx.usb_open(0x0403, 0x6001)
+  #     begin
+  #       ctx.baudrate = 250000
+  #     ensure
+  #      ctx.usb_close
+  #     end
+  #   rescue Ftdi::Error => e
+  #     $stderr.puts e.to_s
+  #   end
+  class Context < FFI::ManagedStruct
     layout(
       # USB specific
       # libusb's context
@@ -136,12 +148,11 @@ module Ftdi
     end
 
     # Deinitialize and free an ftdi context.
-    def dispose
-      Ftdi.ftdi_free(ctx)
+    # @return [NilClass] nil
+    def self.release(p)
+      Ftdi.ftdi_free(p)
       nil
     end
-
-    alias :close :dispose
 
     # Gets error text.
     # @return [String] Error text.
@@ -280,14 +291,15 @@ module Ftdi
     # Writes data.
     # @param [String, Array] bytes String or array of integers that will be interpreted as bytes using pack('c*').
     # @return [Fixnum] Number of written bytes.
+    # @raise [StatusCodeError] libftdi reports error.
     def write_data(bytes)
       bytes = bytes.pack('c*')  if bytes.respond_to?(:pack)
       size = bytes.respond_to?(:bytesize) ? bytes.bytesize : bytes.size
       mem_buf = FFI::MemoryPointer.new(:char, size)
       mem_buf.put_bytes(0, bytes)
-      r = Ftdi.ftdi_write_data(ctx, mem_buf, size)
-      check_result(r)
-      r
+      bytes_written = Ftdi.ftdi_write_data(ctx, mem_buf, size)
+      check_result(bytes_written)
+      bytes_written
     end
 
     # Gets read buffer chunk size.

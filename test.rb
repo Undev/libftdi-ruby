@@ -51,5 +51,4 @@ rescue Ftdi::Error => e
   $stderr.puts e.to_s
 end
 
-ctx.dispose
 
