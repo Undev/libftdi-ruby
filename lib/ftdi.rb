@@ -37,6 +37,9 @@ module Ftdi
   # @see Ftdi::Context#interface=
   Interface = enum(:interface_any, :interface_a, :interface_b, :interface_c, :interface_d)
 
+  # Bitbang mode for {Ftdi::Context#set_bitmode}.
+  BitbangMode = enum(:reset, :bitbang, :mpsse, :syncbb, :mcu, :opto, :cbus, :syncff)
+
   # Flow control: disable
   # @see Ftdi::Context#flowctrl=
   SIO_DISABLE_FLOW_CTRL = 0x0
@@ -267,6 +270,15 @@ module Ftdi
       new_flowctrl
     end
 
+    # Set Bitbang mode for ftdi chip.
+    # @param [Fixnum] bitmask to configure lines. HIGH/ON value configures a line as output.
+    # @param [BitbangMode] mode Bitbang mode: use the values defined in {Ftdi::Context#BitbangMode}
+    # @return [NilClass] nil
+    # @see BitbangMode
+    def set_bitmode(bitmask, mode)
+      check_result(Ftdi.ftdi_set_bitmode(ctx, bitmask, mode))
+    end
+
     # Gets write buffer chunk size.
     # @return [Fixnum] Write buffer chunk size.
     # @raise [StatusCodeError] libftdi reports error.
@@ -339,6 +351,16 @@ module Ftdi
       r
     end
 
+    # Directly read pin state, circumventing the read buffer. Useful for bitbang mode.
+    # @return [Fixnum] Pins state
+    # @raise [StatusCodeError] libftdi reports error.
+    # @see #set_bitmode
+    def read_pins
+      p = FFI::MemoryPointer.new(:uchar, 1)
+      check_result(Ftdi.ftdi_read_pins(ctx, p))
+      p.read_uchar
+    end
+
     # Gets used interface of the device.
     # @return [Interface] Used interface of the device.
     def interface
@@ -385,5 +407,7 @@ module Ftdi
   attach_function :ftdi_read_data_set_chunksize, [ :pointer, :uint ], :int
   attach_function :ftdi_read_data_get_chunksize, [ :pointer, :pointer ], :int
   attach_function :ftdi_set_interface, [ :pointer, Interface ], :int
+  attach_function :ftdi_set_bitmode, [ :pointer,  :int,  :int ], :int
+  attach_function :ftdi_read_pins, [ :pointer,  :pointer ], :int
 end
 
