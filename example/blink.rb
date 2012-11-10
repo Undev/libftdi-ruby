@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 require 'rubygems'
-require './ftdi'
+require 'ftdi'
 
 ctx = Ftdi::Context.new
 
