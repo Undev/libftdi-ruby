@@ -6,7 +6,7 @@ require "ftdi/version"
 module Ftdi
   extend FFI::Library
 
-  ffi_lib "libftdi"
+  ffi_lib ["libftdi", "libftdi.so.1"]
 
   # FTDI chip type.
   ChipType = enum(:type_am, :type_bm, :type_2232c, :type_r, :type_2232h, :type_4232h, :type_232h)
