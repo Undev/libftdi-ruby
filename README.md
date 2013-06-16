@@ -4,7 +4,7 @@ Ruby bindings for [libftdi](http://www.intra2net.com/en/developer/libftdi/index.
 
 ## Prerequisites
 
-You must install `libftdi` itself in addition to this gem.
+You must install `libftdi` version 0.20 in addition to this gem.
 
 ## Synopsys
 

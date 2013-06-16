@@ -89,9 +89,6 @@ module Ftdi
   #   end
   class Context < FFI::ManagedStruct
     layout(
-      # USB specific
-      # libusb's context
-      :usb_ctx, :pointer,
       # libusb's usb_dev_handle
       :usb_dev, :pointer,
       # usb read timeout
@@ -133,10 +130,16 @@ module Ftdi
       :bitbang_mode, :uint8,
 
       # Decoded eeprom structure
-      :eeprom, :pointer,
+      :eeprom, :int,
 
       # String representation of last error
       :error_str, :string,
+
+      # Buffer needed for async communication
+      :async_usb_buffer, :pointer,
+
+      # Number of URB-structures we can buffer
+      :async_usb_buffer_size, :uint,
 
       # Defines behavior in case a kernel module is already attached to the device
       :module_detach_mode, Ftdi::ModuleDetachMode
