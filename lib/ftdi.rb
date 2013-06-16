@@ -379,6 +379,24 @@ module Ftdi
       new_interface
     end
 
+    # Set the DTR control line value.
+    # @param [Fixnum] value Either 0 or 1
+    # @raise [StatusCodeError] libftdi reports error.
+    # @return [Fixnum] The value
+    def dtr=(value)
+      check_result(Ftdi.ftdi_setdtr(ctx, value))
+      value
+    end
+
+    # Set the RTS control line value.
+    # @param [Fixnum] value Either 0 or 1
+    # @raise [StatusCodeError] libftdi reports error.
+    # @return [Fixnum] The value
+    def rts=(value)
+      check_result(Ftdi.ftdi_setrts(ctx, value))
+      value
+    end
+
   private
     def ctx
       self.to_ptr
@@ -412,5 +430,7 @@ module Ftdi
   attach_function :ftdi_set_interface, [ :pointer, Interface ], :int
   attach_function :ftdi_set_bitmode, [ :pointer,  :int,  :int ], :int
   attach_function :ftdi_read_pins, [ :pointer,  :pointer ], :int
+  attach_function :ftdi_setdtr, [ :pointer, :int ], :int
+  attach_function :ftdi_setrts, [ :pointer, :int ], :int
 end
 
